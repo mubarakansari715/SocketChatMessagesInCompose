@@ -9,46 +9,34 @@ import java.net.URISyntaxException
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton
-class SocketManagerImpl @Inject constructor() : SocketManager {
-    private var socket: Socket? = null
+
+class SocketManagerImpl @Inject constructor(
+    private val socket: Socket
+) : SocketManager {
     private var connectionCallback: ((Boolean) -> Unit)? = null
     private var messageCallback: ((Chat) -> Unit)? = null
 
     init {
-        setupSocket()
+        setupListeners()
     }
 
-    private fun setupSocket() {
-        try {
-            val options = IO.Options().apply {
-                reconnection = true
-                reconnectionAttempts = 10
-                reconnectionDelay = 1000
-                timeout = 10000
-            }
-
-            socket = IO.socket(SOCKET_URL, options)
-
-            socket?.on(Socket.EVENT_CONNECT) {
-                Timber.d("Socket connected successfully")
-                connectionCallback?.invoke(true)
-            }
-
-            socket?.on(Socket.EVENT_DISCONNECT) {
-                Timber.d("Socket disconnected")
-                connectionCallback?.invoke(false)
-            }
-
-            socket?.on(Socket.EVENT_CONNECT_ERROR) { args ->
-                Timber.e("Socket connection error: ${args.joinToString()}")
-                connectionCallback?.invoke(false)
-            }
-
-            registerSocketEvents()
-        } catch (e: URISyntaxException) {
-            Timber.e(e, "Socket initialization error")
+    private fun setupListeners() {
+        socket.on(Socket.EVENT_CONNECT) {
+            Timber.d("Socket connected successfully")
+            connectionCallback?.invoke(true)
         }
+
+        socket.on(Socket.EVENT_DISCONNECT) {
+            Timber.d("Socket disconnected")
+            connectionCallback?.invoke(false)
+        }
+
+        socket.on(Socket.EVENT_CONNECT_ERROR) { args ->
+            Timber.e("Socket connection error: ${args.joinToString()}")
+            connectionCallback?.invoke(false)
+        }
+
+        registerSocketEvents()
     }
 
     private fun registerSocketEvents() {
@@ -72,12 +60,6 @@ class SocketManagerImpl @Inject constructor() : SocketManager {
     override fun connect(onConnectionChange: (Boolean) -> Unit) {
         // Store callback
         connectionCallback = onConnectionChange
-
-        // Check if socket needs initialization
-        if (socket == null) {
-            Timber.d("Socket was null, initializing new socket")
-            setupSocket()
-        }
 
         // Check socket state
         if (socket?.connected() == true) {
