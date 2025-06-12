@@ -1,6 +1,7 @@
 package com.example.socketchatmessagesincompose.data.repository
 
 import com.example.socketchatmessagesincompose.ui.model.Chat
+import com.example.socketchatmessagesincompose.ui.model.ChatHistoryResponse
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,5 +29,9 @@ class ChatRepositoryImpl @Inject constructor(
 
     override fun stopListeningForMessages() {
         socketManager.unregisterMessageListener()
+    }
+
+    override fun getMessageHistory(page: Int, pageSize: Int, onHistoryReceived: (ChatHistoryResponse) -> Unit) {
+        socketManager.fetchMessageHistory(page, pageSize, onHistoryReceived)
     }
 }

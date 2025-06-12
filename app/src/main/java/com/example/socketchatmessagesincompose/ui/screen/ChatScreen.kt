@@ -2,6 +2,7 @@ package com.example.socketchatmessagesincompose.ui.screen
 
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +28,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,6 +40,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.socketchatmessagesincompose.ui.viewmodel.ChatUiState
 import com.example.socketchatmessagesincompose.ui.viewmodel.ChatViewModel
 import com.example.socketchatmessagesincompose.ui.model.Chat
+import kotlinx.coroutines.flow.distinctUntilChanged
+import timber.log.Timber
 
 
 @Composable
@@ -47,6 +53,10 @@ fun ChatScreen(
     val messageInput by viewModel.messageInput.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
+    val isLastPage = viewModel.totalMessagesCount.intValue == chatMessages.size
+    val isLoadingMore = viewModel.isLoadingMore.value
+    val uiEvent by viewModel.uiEvent.collectAsState()
+    val state by viewModel.state.collectAsState()
 
     // Set username for the chat session
     LaunchedEffect(username) {
@@ -65,12 +75,38 @@ fun ChatScreen(
         }
     }
 
-    // Scroll to bottom when new messages arrive
-    LaunchedEffect(chatMessages.size) {
-        if (chatMessages.isNotEmpty()) {
-            listState.animateScrollToItem(chatMessages.size - 1)
+// Pagination trigger
+    LaunchedEffect(isLastPage) {
+        snapshotFlow { listState.layoutInfo }
+            .distinctUntilChanged()
+            .collect { layoutInfo ->
+                val totalItems = layoutInfo.totalItemsCount
+                val lastVisible =
+                    layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+                // Only trigger if there are enough items and user scrolls near the end
+                if (totalItems > 0 && !isLastPage && lastVisible >= totalItems - 6) {
+                    viewModel.loadMoreMessages()
+                }
+            }
+    }
+
+    // Handle scroll event
+    LaunchedEffect(uiEvent.scrollToBottom) {
+        if (uiEvent.scrollToBottom && state.messages.isNotEmpty()) {
+//            listState.animateScrollToItem(state.messages.size - 1)
+            listState.animateScrollToItem(0)
+            viewModel.clearEvents()
         }
     }
+
+    // Handle error event
+    LaunchedEffect(uiEvent.showConnectionError) {
+        if (uiEvent.showConnectionError) {
+            // Show toast or snackbar
+            viewModel.clearEvents()
+        }
+    }
+
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -95,7 +131,8 @@ fun ChatScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 8.dp),
+            reverseLayout = true
         ) {
             items(chatMessages) { chat ->
                 val isSelf = chat.username == username
@@ -105,6 +142,20 @@ fun ChatScreen(
                     OtherChatBubble(chat)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // Show loading more
+            if (isLoadingMore) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
             }
         }
 
