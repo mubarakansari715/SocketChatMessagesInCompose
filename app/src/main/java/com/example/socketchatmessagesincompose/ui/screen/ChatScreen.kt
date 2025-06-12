@@ -1,4 +1,4 @@
-package com.example.socketchatmessagesincompose
+package com.example.socketchatmessagesincompose.ui.screen
 
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.foundation.background
@@ -33,6 +33,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.socketchatmessagesincompose.ui.viewmodel.ChatUiState
+import com.example.socketchatmessagesincompose.ui.viewmodel.ChatViewModel
+import com.example.socketchatmessagesincompose.ui.model.Chat
 
 
 @Composable

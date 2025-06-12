@@ -1,4 +1,4 @@
-package com.example.socketchatmessagesincompose
+package com.example.socketchatmessagesincompose.ui.model
 
 data class Chat(
     var id: Int = 0,

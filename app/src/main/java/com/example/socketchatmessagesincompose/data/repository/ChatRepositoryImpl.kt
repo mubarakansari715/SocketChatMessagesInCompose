@@ -1,5 +1,6 @@
-package com.example.socketchatmessagesincompose
+package com.example.socketchatmessagesincompose.data.repository
 
+import com.example.socketchatmessagesincompose.ui.model.Chat
 import javax.inject.Inject
 import javax.inject.Singleton
 

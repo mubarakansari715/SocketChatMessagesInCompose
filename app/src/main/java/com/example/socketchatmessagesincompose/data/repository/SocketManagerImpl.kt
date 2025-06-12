@@ -1,5 +1,6 @@
-package com.example.socketchatmessagesincompose
+package com.example.socketchatmessagesincompose.data.repository
 
+import com.example.socketchatmessagesincompose.ui.model.Chat
 import com.google.gson.Gson
 import io.socket.client.IO
 import io.socket.client.Socket
