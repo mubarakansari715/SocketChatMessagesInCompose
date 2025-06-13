@@ -1,5 +1,6 @@
 package com.example.socketchatmessagesincompose.ui.screen
 
+import android.widget.Toast
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -34,6 +35,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,14 +51,15 @@ fun ChatScreen(
     username: String,
     viewModel: ChatViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val chatMessages by viewModel.chatMessages.collectAsStateWithLifecycle(emptyList())
     val messageInput by viewModel.messageInput.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiEvent by viewModel.uiEvent.collectAsState()
+    val state by viewModel.state.collectAsState()
     val listState = rememberLazyListState()
     val isLastPage = viewModel.totalMessagesCount.intValue == chatMessages.size
     val isLoadingMore = viewModel.isLoadingMore.value
-    val uiEvent by viewModel.uiEvent.collectAsState()
-    val state by viewModel.state.collectAsState()
 
     // Set username for the chat session
     LaunchedEffect(username) {
@@ -103,6 +106,7 @@ fun ChatScreen(
     LaunchedEffect(uiEvent.showConnectionError) {
         if (uiEvent.showConnectionError) {
             // Show toast or snackbar
+            Toast.makeText(context, "Server not connected, Make sure server is running...", Toast.LENGTH_SHORT).show()
             viewModel.clearEvents()
         }
     }
@@ -118,7 +122,7 @@ fun ChatScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    "Connecting...",
+                    "Server Connecting...",
                     modifier = Modifier.padding(8.dp),
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
@@ -170,7 +174,8 @@ fun ChatScreen(
                 value = messageInput,
                 onValueChange = { viewModel.setMessageInput(it) },
                 placeholder = { Text("Type a message") },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                maxLines = 4
             )
 
             Spacer(modifier = Modifier.width(8.dp))

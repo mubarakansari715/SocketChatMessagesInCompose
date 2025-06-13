@@ -60,14 +60,14 @@ class ChatViewModel @Inject constructor(
     private val _chatMessages = MutableStateFlow<List<Chat>>(emptyList())
     val chatMessages: StateFlow<List<Chat>> = _chatMessages.asStateFlow()
 
-     // For UI events that need to be consumed once
-     private val _uiEvent = MutableStateFlow(ChatUiEvent())
-     val uiEvent: StateFlow<ChatUiEvent> = _uiEvent.asStateFlow()
+    // For UI events that need to be consumed once
+    private val _uiEvent = MutableStateFlow(ChatUiEvent())
+    val uiEvent: StateFlow<ChatUiEvent> = _uiEvent.asStateFlow()
 
-     // Call this after consuming the event
-     fun clearEvents() {
-         _uiEvent.value = ChatUiEvent()
-     }
+    // Call this after consuming the event
+    fun clearEvents() {
+        _uiEvent.value = ChatUiEvent()
+    }
 
     private var currentPage = 0
     private val pageSize = 20
@@ -118,7 +118,7 @@ class ChatViewModel @Inject constructor(
 
         chatRepository.getMessageHistory(nextPage, 25) { response ->
             Timber.d("Loaded additional ${response.messages.size} messages")
-//            val updatedMessages = response.messages + _state.value.messages
+//            val updatedMessages = response.messages + _state.value.messages --> for added new message on top
             val updatedMessages = _state.value.messages + response.messages
             _state.update { state ->
                 state.copy(
@@ -131,12 +131,6 @@ class ChatViewModel @Inject constructor(
             }
             isLoadingMore.value = false
             _chatMessages.value = updatedMessages
-
-            /*// Trigger maintain position event instead of scrollToBottom for pagination
-            _uiEvent.value = _uiEvent.value.copy(
-                maintainScrollPosition = true,
-                scrollToBottom = false
-            )*/
         }
     }
 
@@ -177,10 +171,10 @@ class ChatViewModel @Inject constructor(
 
         if (message.isEmpty() || username.isEmpty()) return
 
-         if (!_state.value.isConnected) {
-             _uiEvent.value = _uiEvent.value.copy(showConnectionError = true)
-             return
-         }
+        if (!_state.value.isConnected) {
+            _uiEvent.value = _uiEvent.value.copy(showConnectionError = true)
+            return
+        }
 
         chatRepository.sendMessage(username, message)
         _messageInput.value = ""
