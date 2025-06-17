@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.socketchatmessagesincompose.data.repository.ChatRepository
 import com.example.socketchatmessagesincompose.ui.model.Chat
+import com.example.socketchatmessagesincompose.utils.SessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.util.UUID
 import javax.inject.Inject
 
 sealed class ChatUiState {
@@ -29,7 +31,8 @@ data class ChatUiEvent(
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     var isLoadingMore = mutableStateOf(false)
@@ -72,9 +75,9 @@ class ChatViewModel @Inject constructor(
     private var currentPage = 0
     private val pageSize = 20
 
-    init {
+   /* init {
         connectSocket()
-    }
+    }*/
 
     fun connectSocket() {
         chatRepository.connectSocket { isConnected ->
@@ -158,6 +161,10 @@ class ChatViewModel @Inject constructor(
     }
 
     fun setUsername(username: String) {
+        sessionManager.saveUserSession(
+            userId = username,
+            token = UUID.randomUUID().toString()
+        )
         _username.value = username
     }
 
@@ -181,7 +188,7 @@ class ChatViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        super.onCleared()
         disconnectSocket()
+        super.onCleared()
     }
 }

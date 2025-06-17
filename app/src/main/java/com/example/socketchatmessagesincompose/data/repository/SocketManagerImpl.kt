@@ -250,8 +250,7 @@ class SocketManagerImpl @Inject constructor(
             forceNew = true                           // Always create a new Manager instance
             secure = true                             // Use HTTPS/WSS connection
             transports = arrayOf("websocket")         // Use WebSocket only (disable polling for production)
-            rememberUpgrade =
-                true                    // Skip HTTP polling if previously upgraded to WebSocket
+            rememberUpgrade = true                    // Skip HTTP polling if previously upgraded to WebSocket
 
             // Dummy authentication and user metadata
             query = "userId=$userId&authToken=$authToken&device=$deviceId&appVersion=$appVersion"
