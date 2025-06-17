@@ -1,11 +1,14 @@
 package com.example.socketchatmessagesincompose.di
 
+import android.content.Context
 import com.example.socketchatmessagesincompose.data.config.AppConfig.SOCKET_URL
 import com.example.socketchatmessagesincompose.data.repository.SocketManager
 import com.example.socketchatmessagesincompose.data.repository.SocketManagerImpl
+import com.example.socketchatmessagesincompose.utils.SessionManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.socket.client.IO
 import io.socket.client.Socket
@@ -19,20 +22,9 @@ object SocketModule {
 
     @Provides
     @Singleton
-    fun provideSocketOptions(): IO.Options {
-        return IO.Options().apply {
-            reconnection = true
-            reconnectionAttempts = 10
-            reconnectionDelay = 1000
-            timeout = 10000
-        }
-    }
-
-    @Provides
-    @Singleton
-    fun provideSocket(options: IO.Options): Socket {
-        try {
-            return IO.socket(SOCKET_URL, options)
+    fun provideSocket(): Socket {
+        return try {
+            IO.socket(SOCKET_URL)
         } catch (e: URISyntaxException) {
             Timber.e(e, "Socket initialization error")
             throw RuntimeException("Failed to initialize socket", e)
@@ -41,7 +33,13 @@ object SocketModule {
 
     @Provides
     @Singleton
-    fun provideSocketManager(socketManagerImpl: SocketManagerImpl): SocketManager {
-        return socketManagerImpl
+    fun provideSocketManager(impl: SocketManagerImpl): SocketManager {
+        return impl
+    }
+
+    @Provides
+    @Singleton
+    fun provideSessionManager(@ApplicationContext context: Context): SessionManager{
+        return SessionManager(context)
     }
 }
